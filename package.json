@@ -1,0 +1,39 @@
+{
+  "name": "angelscripts-dockerbuild",
+  "version": "0.0.0",
+  "scripts": {
+    "test": "echo no tests",
+    "release-patch": "npm run test && npm version patch && npm publish && git push --tags && git push origin master",
+    "release-minor": "npm run test && npm version minor && npm publish && git push --tags && git push origin master",
+    "release-major": "npm run test && npm version major && npm publish && git push --tags && git push origin master"
+  },
+  "peerDependencies": {
+    "organic-angel": "0.3.x"
+  },
+  "dependencies": {
+    "angelabilities-exec": "^1.0.0",
+    "file-exists": "^5.0.1",
+    "json2yaml": "^1.1.0",
+    "organic-dna-cells-info": "^2.0.1",
+    "organic-stem-skeleton-find-root": "^1.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^4.18.2",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.7.0",
+    "eslint-plugin-standard": "^3.0.1"
+  },
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/node-organic/angelscripts-dockerbuild.git"
+  },
+  "author": "Boris Filipov",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/node-organic/angelscripts-dockerbuild/issues"
+  },
+  "homepage": "https://github.com/node-organic/angelscripts-dockerbuild#readme"
+}
