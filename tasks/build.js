@@ -10,7 +10,7 @@ module.exports = function (angel) {
     angel.do(`build production ${tag}`)
   })
   angel.on('build :mode :tag', function (angel) {
-    angel.do(`build ${angel.cmdData.mode} ${angel.cmdData.mode.tag} -- npm run start`)
+    angel.do(`build ${angel.cmdData.mode} ${angel.cmdData.tag} -- npm run start`)
   })
   angel.on(/build (.*) (.*) -- (.*)/, async function (angel) {
     let mode = angel.cmdData[1]
