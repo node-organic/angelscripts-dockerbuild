@@ -9,14 +9,20 @@ module.exports = function (angel) {
     let tag = packagejson.name + ':' + packagejson.version
     angel.do(`build production ${tag}`)
   })
-  angel.on('build :mode :tag', async function (angel) {
+  angel.on('build :mode :tag', function (angel) {
+    angel.do(`build ${angel.cmdData.mode} ${angel.cmdData.mode.tag} -- npm run start`)
+  })
+  angel.on(/build (.*) (.*) -- (.*)/, async function (angel) {
+    let mode = angel.cmdData[1]
+    let tag = angel.cmdData[2]
+    let runCmd = angel.cmdData[3]
     let packagejson = require(path.join(process.cwd(), 'package.json'))
     let fullRepoPath = await findSkeletonRoot()
     const loadCellInfo = require(path.join(fullRepoPath, 'cells/node_modules/lib/load-cell-info'))
     let cellInfo = await loadCellInfo(packagejson.name)
     let buildDestinationPath = path.join(os.tmpdir(), packagejson.name + packagejson.version + '-' + Math.random())
     console.log(`building into ${buildDestinationPath}`)
-    let imageTag = angel.cmdData.tag
+    let imageTag = tag
     let cmd = ''
     if (await exists(path.join(process.cwd(), 'Dockerfile'))) {
       let cmd = [
@@ -27,7 +33,7 @@ module.exports = function (angel) {
       console.log(`done, build ${imageTag}`)
       return
     }
-    if (cellInfo.dna.cellKind === 'webcell' && angel.cmdData.mode !== 'development') {
+    if (cellInfo.dna.cellKind === 'webcell' && mode !== 'development') {
       cmd = [
         // build assets/js/css into /dist forlder
         `npm run compile`,
@@ -36,7 +42,7 @@ module.exports = function (angel) {
         // move cell's code into its appropriate place
         `cp -rL ./dist ${buildDestinationPath}`,
         // inject dockerfile into building container root
-        `npx angel docker ${angel.cmdData.mode} > ${buildDestinationPath}/Dockerfile`
+        `npx angel docker ${mode} -- ${runCmd} > ${buildDestinationPath}/Dockerfile`
       ]
     } else {
       let common_deps = ['lib']
@@ -50,7 +56,7 @@ module.exports = function (angel) {
         // copy cell dna
         `npx angel cp dna ${buildDestinationPath}/dna`,
         // inject dockerfile into building container root
-        `npx angel docker ${angel.cmdData.mode} > ${buildDestinationPath}/Dockerfile`
+        `npx angel docker ${mode} -- ${runCmd} > ${buildDestinationPath}/Dockerfile`
       ]
       cmd = cmd.concat(common_deps.map(function (v) {
         return `npx angel cp cells/node_modules/${v} ${buildDestinationPath}/cells/node_modules/${v}`

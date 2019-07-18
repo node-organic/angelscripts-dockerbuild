@@ -7,7 +7,12 @@ module.exports = function (angel) {
   angel.on('docker', (angel) => {
     angel.do('docker production')
   })
-  angel.on('docker :mode', async function (angel) {
+  angel.on('docker :mode', (angel) => {
+    angel.do(`docker ${angel.cmdData.mode} -- npm run start`)
+  })
+  angel.on(/docker (.*) -- (.*)/, async function (angel) {
+    let mode = angel.cmdData[1]
+    let runCmd = angel.cmdData[2]
     let packagejson = require(path.join(process.cwd(), 'package.json'))
     let fullRepoPath = await findSkeletonRoot()
     const loadCellInfo = require(path.join(fullRepoPath, 'cells/node_modules/lib/load-cell-info'))
@@ -17,17 +22,13 @@ module.exports = function (angel) {
       console.log(contents.toString())
       return
     }
-    if (cellInfo.dna.cellKind === 'webcell' && angel.cmdData.mode !== 'development') {
+    if (cellInfo.dna.cellKind === 'webcell' && mode !== 'development') {
       console.log(`FROM nginx:latest
 EXPOSE 80
 COPY ./dist /usr/share/nginx/html
 `)
     } else {
       let nodeVersion = '11.10.1'
-      let runCmd = '["npm", "run", "start"]'
-      if (angel.cmdData.mode === 'development') {
-        runCmd = '["npm", "run", "develop"]'
-      }
       if (packagejson.engines && packagejson.engines.node) {
         nodeVersion = packagejson.engines.node
       }
@@ -41,17 +42,17 @@ RUN apk update && apk upgrade && \
 
 ${common_deps.map(function (v) {
     return `COPY cells/node_modules/${v}/package*.json cells/node_modules/${v}/
-RUN cd cells/node_modules/${v} && npm install --${angel.cmdData.mode}
+RUN cd cells/node_modules/${v} && npm install --${mode}
 `
   }).join('\n')}
 
 COPY ${cellInfo.dna.cwd}/package*.json ${cellInfo.dna.cwd}/
-RUN cd ${cellInfo.dna.cwd} && npm install --${angel.cmdData.mode}
+RUN cd ${cellInfo.dna.cwd} && npm install --${mode}
 
 COPY . .
 
 WORKDIR ${cellInfo.dna.cwd}
-ENV NODE_ENV ${angel.cmdData.mode}
+ENV NODE_ENV ${mode}
 CMD ${runCmd}`)
     }
   })
