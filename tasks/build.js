@@ -24,7 +24,7 @@ module.exports = function (angel) {
     console.log(`building into ${buildDestinationPath}`)
     let imageTag = tag
     let cmd = ''
-    if (await exists(path.join(process.cwd(), 'Dockerfile'))) {
+    if (await exists(path.join(process.cwd(), 'Dockerfile')) && mode === 'production') {
       let cmd = [
         `docker build -t ${imageTag} .`
       ].join(' && ')
@@ -33,7 +33,16 @@ module.exports = function (angel) {
       console.log(`done, build ${imageTag}`)
       return
     }
-    if (cellInfo.dna.cellKind === 'webcell' && mode !== 'development') {
+    if (await exists(path.join(process.cwd(), `Dockerfile.${mode}`))) {
+      let cmd = [
+        `docker build -t ${imageTag} -f ${path.join(process.cwd(), `Dockerfile.${mode}`)} .`
+      ].join(' && ')
+      console.log('running:', cmd)
+      await angel.exec(cmd)
+      console.log(`done, build ${imageTag}`)
+      return
+    }
+    if (cellInfo.dna.cellKind === 'webcell' && mode === 'production') {
       cmd = [
         // build assets/js/css into /dist forlder
         `npm run compile`,
