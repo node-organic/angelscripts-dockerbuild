@@ -17,12 +17,17 @@ module.exports = function (angel) {
     let fullRepoPath = await findSkeletonRoot()
     const loadCellInfo = require(path.join(fullRepoPath, 'cells/node_modules/lib/load-cell-info'))
     let cellInfo = await loadCellInfo(packagejson.name)
-    if (await exists(path.join(process.cwd(), 'Dockerfile'))) {
+    if (await exists(path.join(process.cwd(), 'Dockerfile')) && mode === 'production') {
       let contents = await readFile(path.join(process.cwd(), 'Dockerfile'))
       console.log(contents.toString())
       return
     }
-    if (cellInfo.dna.cellKind === 'webcell' && mode !== 'development') {
+    if (await exists(path.join(process.cwd(), `Dockerfile.${mode}`))) {
+      let contents = await readFile(path.join(process.cwd(), `Dockerfile.${mode}`))
+      console.log(contents.toString())
+      return
+    }
+    if (cellInfo.dna.cellKind === 'webcell' && mode === 'production') {
       console.log(`FROM nginx:latest
 EXPOSE 80
 COPY ./dist /usr/share/nginx/html
