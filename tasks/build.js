@@ -1,6 +1,5 @@
 const path = require('path')
 const os = require('os')
-const findSkeletonRoot = require('organic-stem-skeleton-find-root')
 const exists = require('file-exists')
 
 module.exports = function (angel) {
@@ -17,9 +16,6 @@ module.exports = function (angel) {
     let tag = angel.cmdData[2]
     let runCmd = angel.cmdData[3]
     let packagejson = require(path.join(process.cwd(), 'package.json'))
-    let fullRepoPath = await findSkeletonRoot()
-    const loadCellInfo = require(path.join(fullRepoPath, 'cells/node_modules/lib/load-cell-info'))
-    let cellInfo = await loadCellInfo(packagejson.name)
     let buildDestinationPath = path.join(os.tmpdir(), packagejson.name + packagejson.version + '-' + Math.random())
     console.log(`building into ${buildDestinationPath}`)
     let imageTag = tag
@@ -42,7 +38,8 @@ module.exports = function (angel) {
       console.log(`done, build ${imageTag}`)
       return
     }
-    if (cellInfo.dna.cellKind === 'webcell' && mode === 'production') {
+    // compile for production
+    if (packagejson.scripts.compile && mode === 'production') {
       cmd = [
         // build assets/js/css into /dist forlder
         `npm run compile`,
@@ -54,22 +51,14 @@ module.exports = function (angel) {
         `npx angel docker ${mode} -- ${runCmd} > ${buildDestinationPath}/Dockerfile`
       ]
     } else {
-      let common_deps = ['lib']
-      if (packagejson.common_dependencies) {
-        common_deps = packagejson.common_dependencies
-      }
+    // use as it is for development
       cmd = [
         // move cell's code into its appropriate place
         // use angel cp to exclude gitingored files
-        `npx angel cp ${cellInfo.dna.cwd} ${buildDestinationPath}/${cellInfo.dna.cwd}`,
-        // copy cell dna
-        `npx angel cp dna ${buildDestinationPath}/dna`,
+        `npx angel cp ./ ${buildDestinationPath}/`,
         // inject dockerfile into building container root
         `npx angel docker ${mode} -- ${runCmd} > ${buildDestinationPath}/Dockerfile`
       ]
-      cmd = cmd.concat(common_deps.map(function (v) {
-        return `npx angel cp cells/node_modules/${v} ${buildDestinationPath}/cells/node_modules/${v}`
-      }))
     }
     cmd = cmd.concat([
       // build the container

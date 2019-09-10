@@ -1,5 +1,5 @@
-
 const findSkeletonRoot = require('organic-stem-skeleton-find-root')
+
 module.exports = function (angel) {
   angel.on('cp :src :dest', async function (angel) {
     let fullRepoPath = await findSkeletonRoot()

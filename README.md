@@ -12,13 +12,18 @@ npm install angelscripts-dockerbuild --save
 
 ### `angel build :mode :tag -- :runCmd`
 
-Builds a container by doing `angel cp` of all (tracked) files within the cell working directory and related common dependencies by default only `cells/node_modules/lib` (can be extended via `packagejson.common_dependencies` :bulb:), generates a Dockerfile via `angel docker`.
+Builds a container.
 
 Arguments:
 
 * `mode` - either `production` || `development`, used for `npm install`
 * `tag` - value representing the build container tagged locally, usually `packagejson.name:packagejson.version`.
 * `runCmd` - value representing a command to be run on container start, usually `npm run start` or similar.
+
+Controlling points:
+
+* if defined `packagejson.scripts.compile` will be used to compile the cell into `/dist` output folder
+* if `{cwd}/Dockerfile` or `{cwd}/Dockerfile.{mode}` is present it will be used instead to build the container
 
 ### `angel docker :mode -- :runCmd`
 
@@ -29,9 +34,19 @@ Arguments:
 * `mode` - either `production` || `development`, used for `npm install`
 * `runCmd` - value representing a command to be run on container start, usually `npm run start` or similar.
 
+Controlling points:
+
+* `packagejson.common_dependencies` Array of repo relative paths to be `npm install`-ed
+* `packagejson.engines.node` String indicating node version to be used, defaults to `11.0.1`
+* `cellDNA.cellKind` equal to `webcell` will render nginx:latest based Dockerfile
+
 ### `angel publish`
 
 Publishes already build container to cell's registry.
+
+Data points:
+
+* `cellDNA.registry` String having value of registry to be published at
 
 ### `angel cp :src :dest`
 
