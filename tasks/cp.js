@@ -9,7 +9,7 @@ module.exports = function (angel) {
     // perfectly replace the implementation with
     // recursive file and directory copy while respecting .gitignore files/rules as git does
     let cmd = `cd ${fullRepoPath} && mkdir -p ${dest} && uploadStash=\`git stash create\`; git archive --format tar \${uploadStash:-HEAD} ${src} | tar -C ${dest.replace(src, '')} -xvf -`
-    console.log(cmd)
+    console.log('copying:', cmd)
     angel.exec(cmd)
   })
 }

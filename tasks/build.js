@@ -30,14 +30,14 @@ module.exports = function (angel) {
     }
     if (await exists(path.join(process.cwd(), 'Dockerfile')) && mode === 'production') {
       cmds.push(`docker build -t ${imageTag} .`)
-      console.log('running:', cmds.join(' && '))
+      console.log('building:', cmds.join(' && '))
       await angel.exec(cmds.join(' && '))
       console.log(`done, build ${imageTag}`)
       return
     }
     if (await exists(path.join(process.cwd(), `Dockerfile.${mode}`))) {
       cmds.push(`docker build -t ${imageTag} -f ${path.join(process.cwd(), `Dockerfile.${mode}`)} .`)
-      console.log('running:', cmds.join(' && '))
+      console.log('building:', cmds.join(' && '))
       await angel.exec(cmds.join(' && '))
       console.log(`done, build ${imageTag}`)
       return
@@ -68,7 +68,7 @@ module.exports = function (angel) {
       `cd ${buildDestinationPath}`,
       `docker build -t ${imageTag} .`
     ])
-    console.log('running:', cmds.join(' && '))
+    console.log('building:', cmds.join(' && '))
     await angel.exec(cmds.join(' && '))
     console.log(`done, build ${imageTag}`)
   })
