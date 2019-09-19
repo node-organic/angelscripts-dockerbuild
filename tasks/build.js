@@ -1,6 +1,7 @@
 const path = require('path')
 const os = require('os')
 const exists = require('file-exists')
+const findSkeletonRoot = require('organic-stem-skeleton-find-root')
 
 module.exports = function (angel) {
   angel.on('build', function (angel) {
@@ -16,58 +17,59 @@ module.exports = function (angel) {
     let tag = angel.cmdData[2]
     let runCmd = angel.cmdData[3]
     let packagejson = require(path.join(process.cwd(), 'package.json'))
+    let fullRepoPath = await findSkeletonRoot()
+    const loadCellInfo = require(path.join(fullRepoPath, 'cells/node_modules/lib/load-cell-info'))
+    let cellInfo = await loadCellInfo(packagejson.name)
     let buildDestinationPath = path.join(os.tmpdir(), packagejson.name + packagejson.version + '-' + Math.random())
     console.log(`building into ${buildDestinationPath}`)
     let imageTag = tag
-    let cmd = ''
+    let cmds = []
+    if (packagejson.scripts.compile) {
+      console.log(`compiling:`, packagejson.scripts.compile)
+      cmds.push('npm run compile')
+    }
     if (await exists(path.join(process.cwd(), 'Dockerfile')) && mode === 'production') {
-      let cmd = [
-        `docker build -t ${imageTag} .`
-      ].join(' && ')
-      console.log('running:', cmd)
-      await angel.exec(cmd)
+      cmds.push(`docker build -t ${imageTag} .`)
+      console.log('running:', cmds.join(' && '))
+      await angel.exec(cmds.join(' && '))
       console.log(`done, build ${imageTag}`)
       return
     }
     if (await exists(path.join(process.cwd(), `Dockerfile.${mode}`))) {
-      let cmd = [
-        `docker build -t ${imageTag} -f ${path.join(process.cwd(), `Dockerfile.${mode}`)} .`
-      ].join(' && ')
-      console.log('running:', cmd)
-      await angel.exec(cmd)
+      cmds.push(`docker build -t ${imageTag} -f ${path.join(process.cwd(), `Dockerfile.${mode}`)} .`)
+      console.log('running:', cmds.join(' && '))
+      await angel.exec(cmds.join(' && '))
       console.log(`done, build ${imageTag}`)
       return
     }
-    // compile for production
-    if (packagejson.scripts.compile && mode === 'production') {
-      cmd = [
-        // build assets/js/css into /dist forlder
-        `npm run compile`,
+    // webcells in production are compiled using buildin dockerfile, see
+    // ./docker.js
+    if (cellInfo.dna.cellKind === 'webcell' && mode === 'production') {
+      cmds = cmds.concat([
         // create dest folder
         `mkdir -p ${buildDestinationPath}`,
         // move cell's code into its appropriate place
         `cp -rL ./dist ${buildDestinationPath}`,
         // inject dockerfile into building container root
         `npx angel docker ${mode} -- ${runCmd} > ${buildDestinationPath}/Dockerfile`
-      ]
+      ])
     } else {
     // use as it is for development
-      cmd = [
+      cmds = cmds.concat([
         // move cell's code into its appropriate place
         // use angel cp to exclude gitingored files
         `npx angel cp ./ ${buildDestinationPath}/`,
         // inject dockerfile into building container root
         `npx angel docker ${mode} -- ${runCmd} > ${buildDestinationPath}/Dockerfile`
-      ]
+      ])
     }
-    cmd = cmd.concat([
+    cmds = cmds.concat([
       // build the container
       `cd ${buildDestinationPath}`,
       `docker build -t ${imageTag} .`
     ])
-    cmd = cmd.join(' && ')
-    console.log('running:', cmd)
-    await angel.exec(cmd)
+    console.log('running:', cmds.join(' && '))
+    await angel.exec(cmds.join(' && '))
     console.log(`done, build ${imageTag}`)
   })
 }
