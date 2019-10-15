@@ -24,7 +24,7 @@ module.exports = function (angel) {
     console.log(`building into ${buildDestinationPath}`)
     let imageTag = tag
     let cmds = []
-    if (packagejson.scripts.compile) {
+    if (packagejson.scripts.compile && mode !== 'development') {
       console.log(`compiling:`, packagejson.scripts.compile)
       cmds.push('npm run compile')
     }
