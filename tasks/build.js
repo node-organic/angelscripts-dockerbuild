@@ -12,9 +12,33 @@ module.exports = function (angel) {
   angel.on('build :mode :tag', function (angel) {
     angel.do(`build ${angel.cmdData.mode} ${angel.cmdData.tag} -- npm run start`)
   })
+  angel.on(/build (.*) (.*) (.*) -- (.*)/, async function (angel) {
+    let baseImageTag = angel.cmdData[1]
+    let mode = angel.cmdData[2]
+    let imageTag = angel.cmdData[3]
+    let runCmd = angel.cmdData[4]
+    let cmds = []
+    let packagejson = require(path.join(process.cwd(), 'package.json'))
+    let buildDestinationPath = path.join(os.tmpdir(), packagejson.name + packagejson.version + '-' + Math.random())
+    cmds = cmds.concat([
+      // move cell's code into its appropriate place
+      // use angel cp to exclude gitingored files
+      `npx angel cp ./ ${buildDestinationPath}/`,
+      // inject dockerfile into building container root
+      `npx angel docker ${baseImageTag} ${mode} -- ${runCmd} > ${buildDestinationPath}/Dockerfile`
+    ])
+    cmds = cmds.concat([
+      // build the container
+      `cd ${buildDestinationPath}`,
+      `docker build -t ${imageTag} .`
+    ])
+    console.log('building:', cmds.join(' && '))
+    await angel.exec(cmds.join(' && '))
+    console.log(`done, build ${imageTag}`)
+  })
   angel.on(/build (.*) (.*) -- (.*)/, async function (angel) {
     let mode = angel.cmdData[1]
-    let tag = angel.cmdData[2]
+    let imageTag = angel.cmdData[2]
     let runCmd = angel.cmdData[3]
     let packagejson = require(path.join(process.cwd(), 'package.json'))
     let fullRepoPath = await findSkeletonRoot()
@@ -22,7 +46,6 @@ module.exports = function (angel) {
     let cellInfo = await loadCellInfo(packagejson.name)
     let buildDestinationPath = path.join(os.tmpdir(), packagejson.name + packagejson.version + '-' + Math.random())
     console.log(`building into ${buildDestinationPath}`)
-    let imageTag = tag
     let cmds = []
     if (packagejson.scripts.compile && mode !== 'development') {
       console.log(`compiling:`, packagejson.scripts.compile)

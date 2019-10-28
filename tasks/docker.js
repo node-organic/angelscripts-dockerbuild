@@ -10,6 +10,23 @@ module.exports = function (angel) {
   angel.on('docker :mode', (angel) => {
     angel.do(`docker ${angel.cmdData.mode} -- npm run start`)
   })
+  angel.on(/docker (.*) (.*) -- (.*)/, async function (angel) {
+    let baseImageTag = angel.cmdData[1]
+    let mode = angel.cmdData[2]
+    let runCmd = angel.cmdData[3]
+
+    let packagejson = require(path.join(process.cwd(), 'package.json'))
+    let fullRepoPath = await findSkeletonRoot()
+    const loadCellInfo = require(path.join(fullRepoPath, 'cells/node_modules/lib/load-cell-info'))
+    let cellInfo = await loadCellInfo(packagejson.name)
+    console.log(`FROM ${baseImageTag}
+
+    COPY . .
+            
+    WORKDIR ${cellInfo.dna.cwd}
+    ENV NODE_ENV ${mode}
+    CMD ${runCmd}`)
+  })
   angel.on(/docker (.*) -- (.*)/, async function (angel) {
     let mode = angel.cmdData[1]
     let runCmd = angel.cmdData[2]
