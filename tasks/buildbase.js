@@ -3,7 +3,7 @@ const os = require('os')
 // const findSkeletonRoot = require('organic-stem-skeleton-find-root')
 
 module.exports = function (angel) {
-  angel.on(/buildbase (.*) (.*)/, async function (angel) {
+  angel.on(/^buildbase (.*) (.*)/, async function (angel) {
     let mode = angel.cmdData[1]
     let tag = angel.cmdData[2]
     let packagejson = require(path.join(process.cwd(), 'package.json'))

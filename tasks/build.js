@@ -12,7 +12,7 @@ module.exports = function (angel) {
   angel.on('build :mode :tag', function (angel) {
     angel.do(`build ${angel.cmdData.mode} ${angel.cmdData.tag} -- npm run start`)
   })
-  angel.on(/build (.*) (.*) (.*) -- (.*)/, async function (angel) {
+  angel.on(/^build (.*) (.*) (.*) -- (.*)/, async function (angel) {
     let baseImageTag = angel.cmdData[1]
     let mode = angel.cmdData[2]
     let imageTag = angel.cmdData[3]
@@ -36,7 +36,7 @@ module.exports = function (angel) {
     await angel.exec(cmds.join(' && '))
     console.log(`done, build ${imageTag}`)
   })
-  angel.on(/build (.*) (.*) -- (.*)/, async function (angel) {
+  angel.on(/^build (.*) (.*) -- (.*)/, async function (angel) {
     let mode = angel.cmdData[1]
     let imageTag = angel.cmdData[2]
     let runCmd = angel.cmdData[3]

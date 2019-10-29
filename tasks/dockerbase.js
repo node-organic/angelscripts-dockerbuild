@@ -2,7 +2,7 @@ const path = require('path')
 const findSkeletonRoot = require('organic-stem-skeleton-find-root')
 
 module.exports = function (angel) {
-  angel.on(/dockerbase (.*)/, async function (angel) {
+  angel.on(/^dockerbase (.*)/, async function (angel) {
     let mode = angel.cmdData[1]
     let packagejson = require(path.join(process.cwd(), 'package.json'))
     let fullRepoPath = await findSkeletonRoot()
