@@ -11,7 +11,9 @@ module.exports = function (angel) {
     let imageTag = packagejson.name + ':' + packagejson.version
     let cmd = [
       `docker tag ${imageTag} ${registry}/${imageTag}`,
-      `docker push ${registry}/${imageTag}`
+      `docker tag ${imageTag} ${registry}/${packagejson.name}:latest`,
+      `docker push ${registry}/${imageTag}`,
+      `docker push ${registry}/${packagejson.name}:latest`
     ].join(' && ')
     console.log('publishing:', cmd)
     await angel.exec(cmd)

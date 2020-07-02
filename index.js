@@ -6,7 +6,4 @@ module.exports = async function (angel) {
   require('./tasks/dockerbase')(angel)
   require('./tasks/publish')(angel)
   require('./tasks/cp')(angel)
-  process.on('unhandledRejection', (err) => {
-    throw err
-  })
 }
