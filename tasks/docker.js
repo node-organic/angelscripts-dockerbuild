@@ -10,23 +10,6 @@ module.exports = function (angel) {
   angel.on('docker :mode', (angel) => {
     angel.do(`docker ${angel.cmdData.mode} -- npm run start`)
   })
-  angel.on(/^docker (.*) (.*) -- (.*)/, async function (angel) {
-    let baseImageTag = angel.cmdData[1]
-    let mode = angel.cmdData[2]
-    let runCmd = angel.cmdData[3]
-
-    let packagejson = require(path.join(process.cwd(), 'package.json'))
-    let fullRepoPath = await findSkeletonRoot()
-    const loadCellInfo = require(path.join(fullRepoPath, 'cells/node_modules/lib/load-cell-info'))
-    let cellInfo = await loadCellInfo(packagejson.name)
-    console.log(`FROM ${baseImageTag}
-
-    COPY . .
-            
-    WORKDIR ${cellInfo.dna.cwd}
-    ENV NODE_ENV ${mode}
-    CMD ${runCmd}`)
-  })
   angel.on(/^docker (.*) -- (.*)/, async function (angel) {
     let mode = angel.cmdData[1]
     let runCmd = angel.cmdData[2]
@@ -34,7 +17,7 @@ module.exports = function (angel) {
     let fullRepoPath = await findSkeletonRoot()
     const loadCellInfo = require(path.join(fullRepoPath, 'cells/node_modules/lib/load-cell-info'))
     let cellInfo = await loadCellInfo(packagejson.name)
-    if (await exists(path.join(process.cwd(), 'Dockerfile')) && mode === 'production') {
+    if (await exists(path.join(process.cwd(), 'Dockerfile'))) {
       let contents = await readFile(path.join(process.cwd(), 'Dockerfile'))
       console.log(contents.toString())
       return
@@ -44,21 +27,25 @@ module.exports = function (angel) {
       console.log(contents.toString())
       return
     }
-    if (cellInfo.dna.cellKind === 'webcell' && mode === 'production') {
-      console.log(`FROM nginx:latest
-EXPOSE 80
-COPY ./dist /usr/share/nginx/html
-`)
-    } else {
-      let nodeVersion = '11.10.1'
-      if (packagejson.engines && packagejson.engines.node) {
-        nodeVersion = packagejson.engines.node
-      }
-      let common_deps = ['lib']
-      if (packagejson.common_dependencies) {
-        common_deps = packagejson.common_dependencies
-      }
-      console.log(`FROM node:${nodeVersion}-alpine
+    let shortMode = ''
+    switch (mode) {
+      case 'production': shortMode = 'prod'; break
+      case 'development': shortMode = 'dev'; break
+    }
+    if (await exists(path.join(process.cwd(), `Dockerfile.${shortMode}`))) {
+      let contents = await readFile(path.join(process.cwd(), `Dockerfile.${shortMode}`))
+      console.log(contents.toString())
+      return
+    }
+    let nodeVersion = '11.10.1'
+    if (packagejson.engines && packagejson.engines.node) {
+      nodeVersion = packagejson.engines.node
+    }
+    let common_deps = ['lib']
+    if (packagejson.common_dependencies) {
+      common_deps = packagejson.common_dependencies
+    }
+    console.log(`FROM node:${nodeVersion}-alpine
 RUN apk update && apk upgrade && \
   apk add --no-cache bash git openssh
 
@@ -76,6 +63,5 @@ COPY . .
 WORKDIR ${cellInfo.dna.cwd}
 ENV NODE_ENV ${mode}
 CMD ${runCmd}`)
-    }
   })
 }

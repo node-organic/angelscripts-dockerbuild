@@ -22,8 +22,7 @@ Arguments:
 
 Controlling points:
 
-* if defined `packagejson.scripts.compile` will be used to compile the cell into `/dist` output folder
-* if `{cwd}/Dockerfile` or `{cwd}/Dockerfile.{mode}` is present it will be used instead to build the container
+* if `{cwd}/Dockerfile.{mode}` is present it will be used instead to build the container
 
 ### `angel docker :mode -- :runCmd`
 
@@ -53,20 +52,3 @@ Data points:
 Does an recursive file and directory copy from `src` to `dest` by honoring `.gitignore` files and rules. It uses for `cwd` the stem skeleton repo's root, so `src` should be relative to that folder.
 
 :warning: current implementation is lacking behind actual requirements and works only on git added files.
-
-### `angel buildbase :mode :tag`
-
-Builds a base image in `mode` tagged as `tag` using `angel dockerbase` as Dockerfile generator.
-
-### `angel dockerbase :mode`
-
-Outputs Dockerfile contents of a base image holding instructions only for npm install of cell's dependencies and `common_dependencies`
-
-controlling points:
-
-* `packagejson.common_dependencies` Array of repo relative paths to be `npm install`-ed
-* `packagejson.engines.node` String indicating node version to be used, defaults to `11.0.1`
-
-### `angel build :baseImageTag :mode :imageTag -- :runCmd`
-
-Uses `baseImageTag` as container image to be used for generation of a cell container in `mode` tagged as `imageTag` and starting with `runCmd`.
