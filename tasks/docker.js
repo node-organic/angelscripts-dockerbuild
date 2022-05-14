@@ -37,10 +37,7 @@ module.exports = function (angel) {
       console.log(contents.toString())
       return
     }
-    let nodeVersion = '11.10.1'
-    if (packagejson.engines && packagejson.engines.node) {
-      nodeVersion = packagejson.engines.node
-    }
+    let nodeVersion = process.version.replace('v', '')
     let common_deps = ['lib']
     if (packagejson.common_dependencies) {
       common_deps = packagejson.common_dependencies
