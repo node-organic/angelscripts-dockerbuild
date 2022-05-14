@@ -9,11 +9,8 @@
     "release-major": "npm version major && npm publish",
     "postversion": "git push origin master && git push origin master --tags"
   },
-  "peerDependencies": {
-    "organic-angel": "0.3.x"
-  },
   "dependencies": {
-    "angelabilities-exec": "^1.0.0",
+    "angelabilities-exec": "^1.0.1",
     "file-exists": "^5.0.1",
     "organic-stem-skeleton-find-root": "^2.0.0"
   },
